@@ -17,3 +17,8 @@ def add_one_hot(df, column_name):
         if (column_name == "Sex"):
             df.pop("Sex_male")
     return df
+
+
+def nan_to_mean(df):
+    df = df.fillna(df.mean())
+    return df
