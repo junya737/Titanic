@@ -169,3 +169,29 @@ def lgbm_bayesian_opt(x, y, cv, params, n_trials=50, config="study"):
     # そうでないならstudyを返す
     else:
         return study
+
+
+def cv_lgbm_bayesian_opt(x, y, cv_cv, cv_opt, params, n_trials):
+    """Cross validation and bayesian opt
+
+    Args:
+        x (_type_): _description_
+        y (_type_): _description_
+        cv_cv (_type_): cv for cv
+        cv_opt (_type_): cv for opt
+        params (dict): hypara support
+        n_trials (int): num of trials in opt
+
+    Returns:
+        list: list of study
+    """
+    study_list = []
+    for _, (train_idx, _) in enumerate(cv_cv.split(x, y)):
+        x_train = x[train_idx]
+        y_train = y[train_idx]
+        # bayesian opt
+        study_list.append(lgbm_bayesian_opt(x_train, y_train, cv_opt,
+                                            params, n_trials))
+
+    return study_list
+
