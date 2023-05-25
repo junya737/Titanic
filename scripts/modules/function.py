@@ -4,6 +4,7 @@ import datetime
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import cross_validate
 from sklearn.metrics import accuracy_score
+import optuna
 import lightgbm as lgb
 
 
@@ -106,3 +107,65 @@ def cross_val_score_lgbm_earlystopping(clf, x, y, cv, stopping_rounds=50,
         scores.append(score)
 
     return np.mean(scores)
+
+
+def lgbm_bayesian_opt(x, y, cv, params, n_trials=50, config="study"):
+    """ Optimaize hypara of lgbm using bayesian optimization
+
+    Args:
+        x (_type_): _description_
+        y (_type_): _description_
+        cv (_type_): _description_
+        params (_type_): _description_
+        n_trials (int, optional): _description_. Defaults to 50.
+        config (str, optional): if print, print logs. Defaults to "study".
+
+    Returns:
+        class: study instance
+    """
+
+    # 最適化する関数を用意　
+    def objective(trial):
+        # trial型 次に試すパラメータをsuggestするメソッドを持つ suggest_category, intなどもある
+        lgbm_params = {
+            'boosting_type': 'gbdt',
+            'objective': 'binary',
+            'num_leaves': trial.suggest_int(
+                "num_leaves", params["num_leaves"][0],
+                params["num_leaves"][1]),
+            "max_depth": trial.suggest_int(
+                "max_depth", params["max_depth"][0],
+                params["max_depth"][1]),
+            'learning_rate': trial.suggest_float(
+                "learning_rate", params["learning_rate"][0],
+                params["learning_rate"][1]),
+            'random_state': 42,
+            "class_weight": "balanced"
+        }
+        clf = lgb.LGBMClassifier(**lgbm_params)
+        score = cross_val_score_lgbm_earlystopping(clf, x, y, cv)
+
+        return score
+
+    # ログを非表示
+    optuna.logging.disable_default_handler()
+    # 次のトライアルのパラメータ選択方法
+    sampler = optuna.samplers.TPESampler(seed=0)
+    # study型　
+    study = optuna.create_study(sampler=sampler, direction="maximize")
+    # 最適化
+    study.optimize(objective, n_trials=n_trials)
+
+    # print 設定なら結果を表示
+    if (config == "print"):
+        # 探索後の最良値
+        print("trial:", study.best_trial.number+1)
+        print(study.best_value)
+        print(study.best_params)
+        # 探索の履歴
+        for trial in study.get_trials():
+            print(trial.number+1, ":", trial.value, trial.params)
+
+    # そうでないならstudyを返す
+    else:
+        return study
