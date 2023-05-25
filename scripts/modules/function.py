@@ -195,3 +195,12 @@ def cv_lgbm_bayesian_opt(x, y, cv_cv, cv_opt, params, n_trials):
 
     return study_list
 
+
+def get_now_time():
+    """return now time as string
+
+    Returns:
+        _type_: _description_
+    """
+    dt_now = datetime.datetime.now()
+    return dt_now.strftime('%Y%m%d_%H%M%S')
