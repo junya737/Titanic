@@ -228,3 +228,63 @@ def lgbm_fit_earlystopping(clf, x_train, y_train, x_val, y_val,
                                           verbose=False),
                        lgb.log_evaluation(0)])
     return clf
+
+
+def set_lgbm_params(params):
+    """lgbmにハイパラをセットする
+
+    Args:
+        params (list): 
+    Returns:
+        class: _description_
+    """
+
+    lgbm_params = {
+        'boosting_type': 'gbdt',
+        'objective': 'binary',
+        'metric': 'accuracy',
+        'num_leaves': params["num_leaves"],
+        "max_depth": params["max_depth"],
+        'learning_rate': params["learning_rate"],
+        'n_estimators': 10000,
+        'random_state': 42,
+        "class_weight": "balanced"
+    }
+
+    return lgb.LGBMClassifier(**lgbm_params)
+
+
+def cv_lgbm_clf(x, y, cv_cv, params_list, eval_metric, stopping_rounds):
+    """lgbmのclfリストを取得
+
+    Args:
+        x (_type_): _description_
+        y (_type_): _description_
+        cv_cv (_type_): _description_
+        params_list (_type_): _description_
+        eval_metric (_type_): _description_
+        stopping_rounds (_type_): _description_
+
+    Returns:
+        list: _description_
+    """
+
+    clf_list = []
+    for i, (train_idx, test_idx) in enumerate(cv_cv.split(x, y)):
+        x_train = x[train_idx]
+        x_test = x[test_idx]
+        y_train = y[train_idx]
+        y_test = y[test_idx]
+
+        params = params_list[i]
+        clf = set_lgbm_params(params)
+        clf = lgbm_fit_earlystopping(
+            clf, x_train, y_train, x_test, y_test, eval_metric,
+            stopping_rounds)
+
+        # ハイパラの確認
+        for key in ["num_leaves", "max_depth", "learning_rate"]:
+            assert clf.get_params()[key] == params[key], "ハイパラの値が一致していません"
+        clf_list.append(clf)
+
+    return clf_list
