@@ -204,3 +204,27 @@ def get_now_time():
     """
     dt_now = datetime.datetime.now()
     return dt_now.strftime('%Y%m%d_%H%M%S')
+
+
+def lgbm_fit_earlystopping(clf, x_train, y_train, x_val, y_val,
+                           eval_metric, stopping_rounds):
+    """fitting lgbm with earlystopping
+
+    Args:
+        clf (class): _description_
+        x_train (_type_): _description_
+        y_train (_type_): _description_
+        x_val (_type_): val data for early stopping
+        y_val (_type_): _description_
+        eval_metric (str): _description_
+        stopping_rounds (int): _description_
+
+    Returns:
+        class: model after fitting
+    """
+    clf.fit(x_train, y_train,
+            eval_metric=eval_metric, eval_set=[(x_val, y_val)],
+            callbacks=[lgb.early_stopping(stopping_rounds=stopping_rounds,
+                                          verbose=False),
+                       lgb.log_evaluation(0)])
+    return clf
