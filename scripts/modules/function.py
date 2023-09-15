@@ -31,8 +31,8 @@ def nan_to_mean(df):
     return df
 
 
-def save_kaggle_prediction(prediction, Id, target_col_name="target",
-                           Id_col_name="Id"):
+def save_kaggle_prediction(Id, prediction, Id_col_name="Id",
+                           target_col_name="target"):
     # my_prediction(予測データ）とPassengerIdをデータフレームへ落とし込む
     my_solution = pd.DataFrame(prediction, Id, columns=[target_col_name])
     dt_now = datetime.datetime.now()
